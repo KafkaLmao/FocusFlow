@@ -1,0 +1,22 @@
+// State and event smoke tests using a minimal DOM adapter; no browser layout claims.
+const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/strict');
+const elements=new Map(),listeners={},storage=new Map();
+function element(key){if(!elements.has(key))elements.set(key,{value:'',textContent:'',innerHTML:'',dataset:{},childNodes:[{textContent:''}],classList:{add(){},remove(){},toggle(){}},style:{setProperty(){}},setAttribute(){},reset(){},focus(){},showModal(){this.open=true},close(){this.open=false}});return elements.get(key);}
+const document={querySelector:s=>s==='dialog[open]'?null:element(s),querySelectorAll:()=>[],documentElement:{dataset:{}},addEventListener:(k,f)=>(listeners[k]??=[]).push(f)};
+const context={document,localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},crypto:require('node:crypto').webcrypto,matchMedia:()=>({matches:false}),setTimeout:()=>1,clearTimeout(){},setInterval(){},window:{addEventListener(){}},console,Date};
+const run=()=>vm.runInNewContext(fs.readFileSync(__dirname+'/dist/app.js','utf8'),context);
+run();const saved=()=>JSON.parse(storage.get('focusflow.tasks.v1'));
+assert.equal(saved().length,9);assert.equal(element('#stat-overdue').textContent,1);assert.equal(element('#stat-today').textContent,3);assert.equal(element('#ring-percent').textContent,'40%');
+const submit=()=>element('#task-form').onsubmit({preventDefault(){}});
+element('#task-id').value='';element('#task-title').value='Test assignment';element('#task-subject').value='Testing';element('#task-deadline').value='2099-01-01';element('#task-priority').value='High';submit();assert.equal(saved().length,10);
+const added=saved().find(t=>t.title==='Test assignment');assert.ok(added);
+element('#task-id').value=added.id;element('#task-title').value='Updated assignment';submit();assert.equal(saved().length,10);assert.equal(saved().find(t=>t.id===added.id).title,'Updated assignment');
+listeners.click[0]({target:{closest:s=>s==='[data-toggle]'?{dataset:{toggle:added.id}}:null}});assert.equal(saved().find(t=>t.id===added.id).completed,true);
+element('#delete-task').onclick();assert.equal(saved().length,9);
+listeners.keydown[0]({key:'z',ctrlKey:true,target:{matches:()=>false},preventDefault(){}});assert.equal(saved().length,10);
+element('#search').oninput({target:{value:'no such assignment'}});assert.match(element('#tasks').innerHTML,/No matching assignments/);
+element('#search').oninput({target:{value:''}});element('#board-view').onclick();assert.match(element('#tasks').innerHTML,/board-column/);
+listeners.drop[0]({target:{closest:()=>({dataset:{priority:'Low'}})},preventDefault(){},dataTransfer:{getData:()=>added.id}});assert.equal(saved().find(t=>t.id===added.id).priority,'Low');
+element('#theme').onclick();assert.equal(storage.get('focusflow.theme'),'dark');
+storage.set('focusflow.tasks.v1','[]');run();assert.equal(saved().length,0);
+console.log('PASS: initialization, daily totals, progress, create, edit, complete, delete, undo, search, board, priority drop, theme, and empty-state persistence.');
