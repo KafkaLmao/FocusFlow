@@ -28,3 +28,7 @@ Source: `dist/index.html`, `dist/style.css`, `dist/app.js`. Google Fonts are opt
 Lenis uses one GSAP ticker, converting seconds to milliseconds. Native touch scrolling is preserved. Reduced motion disables both smoothing and entrance animations, including live preference changes. Native dialogs stop background smoothing and allow their own scroll. GSAP owns a scoped entrance timeline and completion feedback; instances, ticker callbacks and observers are cleaned up on pagehide and restored after back/forward cache navigation. The core app remains usable if motion libraries fail to load.
 
 Library sources: https://github.com/darkroomengineering/lenis and https://gsap.com. Lenis uses the MIT license; GSAP retains its Standard License header.
+
+## Monochrome interface
+
+The interface uses black, white and neutral gray only, with no gradients. Daily progress is drawn with an SVG circle stroke. A labeled switch in the top bar is available on desktop and mobile, updates its accessible checked state, and persists the light/dark preference locally.

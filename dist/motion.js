@@ -28,12 +28,9 @@
       }
       context=gsap.context(()=>{
         gsap.timeline({defaults:{ease:'power3.out'}})
-          .from('.page-heading',{y:16,opacity:0,duration:.55})
-          .from('.focus-banner',{y:20,opacity:0,duration:.65},'-.35')
-          .from('.banner-copy>*',{y:12,opacity:0,duration:.45,stagger:.055},'-.45')
-          .from('.orbit-art',{rotate:-12,scale:.92,opacity:0,duration:1},'-.65')
-          .from('.stat',{y:15,opacity:0,duration:.45,stagger:.06},'-.65')
-          .from('.content-grid',{y:14,opacity:0,duration:.5},'-.25');
+          .from('.page-heading',{y:16,opacity:0,duration:.25})
+          .from('.stat',{y:15,opacity:0,duration:.25,stagger:.035},'-.15')
+          .from('.content-grid',{y:14,opacity:0,duration:.25},'-.15');
       },document.body);
       return ()=>{if(tick)gsap.ticker.remove(tick);lenis?.destroy();lenis=null;tick=null;context?.revert();};
     });
@@ -43,11 +40,6 @@
     });
     document.querySelectorAll('dialog').forEach(d=>observer.observe(d,{attributes:true,attributeFilter:['open']}));
   }
-  document.querySelector('#jump-tasks').addEventListener('click',()=>{
-    const target=document.querySelector('#lineup');
-    if(lenis)lenis.scrollTo(target,{offset:-24,duration:.7});else target.scrollIntoView({behavior:reduce.matches?'instant':'smooth',block:'start'});
-    target.querySelector('input')?.focus({preventScroll:true});
-  });
   function feedback(e){
     if(!gsap||reduce.matches)return;
     const toggle=e.target.closest('[data-toggle]');
