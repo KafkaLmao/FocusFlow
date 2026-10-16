@@ -53,3 +53,7 @@ Lenis uses one GSAP ticker with millisecond conversion and native touch scrollin
 ## Vanta background
 
 Vanta DOTS 0.5.24 adds a subtle grayscale dot field behind the workspace. It shares the existing Three.js 0.180.0 bundle with PaperCrumple. The vendored effect has a small constructor adapter to accept an explicitly injected Three.js module instead of requiring a global. `showLines` is disabled and touch/mouse/gyro controls are off. Light/dark changes update the point material directly. The Background toggle persists locally; reduced motion and hidden tabs destroy the animation. Context failures retain a static background. Teardown disposes the Vanta scene and renderer. Source and MIT license: `src/vendor/vanta`, https://github.com/tengbao/vanta. Browser/GPU verification is still required.
+
+## New-note pinning
+
+New assignments in Bulletin get a GSAP paper-settle and pushpin-press animation. The note remains immediately usable; reduced motion shows the final pinned state directly. Existing tasks do not animate on edit or reload. A new assignment that does not match the current daily/completed view or filters is revealed in the appropriate list. `dist/pin.js` owns and cleans up the short animation; the pin is decorative SVG and follows the theme.

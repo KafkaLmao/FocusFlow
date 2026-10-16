@@ -3,14 +3,14 @@ const vm=require('node:vm'),fs=require('node:fs'),assert=require('node:assert/st
 const elements=new Map(),listeners={},storage=new Map();
 function element(key){if(!elements.has(key))elements.set(key,{value:'',textContent:'',innerHTML:'',dataset:{},childNodes:[{textContent:''}],classList:{add(){},remove(){},toggle(){}},style:{setProperty(){}},attributes:{},setAttribute(k,v){this.attributes[k]=v},reset(){},focus(){},showModal(){this.open=true},close(){this.open=false}});return elements.get(key);}
 const document={querySelector:s=>s==='dialog[open]'?null:element(s),querySelectorAll:()=>[],documentElement:{dataset:{},style:{}},addEventListener:(k,f)=>(listeners[k]??=[]).push(f)};
-const effects=[];const context={document,localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},crypto:require('node:crypto').webcrypto,matchMedia:()=>({matches:false}),setTimeout:()=>1,clearTimeout(){},setInterval(){},window:{addEventListener(){},FocusFlowPaper:{complete:job=>effects.push(job),cancel:id=>effects.push({cancel:id})}},console,Date};
+const effects=[],pinned=[];const context={document,localStorage:{getItem:k=>storage.get(k)??null,setItem:(k,v)=>storage.set(k,v)},crypto:require('node:crypto').webcrypto,matchMedia:()=>({matches:false}),setTimeout:()=>1,clearTimeout(){},setInterval(){},window:{addEventListener(){},FocusFlowPin:{play:id=>pinned.push(id)},FocusFlowPaper:{complete:job=>effects.push(job),cancel:id=>effects.push({cancel:id})}},console,Date};
 const run=()=>vm.runInNewContext(fs.readFileSync(__dirname+'/dist/app.js','utf8'),context);
 run();const saved=()=>JSON.parse(storage.get('focusflow.tasks.v1'));
 assert.equal(saved().length,9);assert.equal(element('#stat-overdue').textContent,1);assert.equal(element('#stat-today').textContent,3);assert.equal(element('#ring-percent').textContent,'40%');
 const submit=()=>element('#task-form').onsubmit({preventDefault(){}});
 element('#task-id').value='';element('#task-title').value='Test assignment';element('#task-notes').value='Bring notes\nReview chapter 3';element('#task-subject').value='Testing';element('#task-deadline').value='2099-01-01';element('#task-priority').value='High';submit();assert.equal(saved().length,10);
-const added=saved().find(t=>t.title==='Test assignment');assert.ok(added);assert.equal(added.notes,'Bring notes\nReview chapter 3');
-element('#task-id').value=added.id;element('#task-title').value='Updated assignment';submit();assert.equal(saved().length,10);assert.equal(saved().find(t=>t.id===added.id).title,'Updated assignment');
+const added=saved().find(t=>t.title==='Test assignment');assert.ok(added);assert.deepEqual(pinned,[added.id]);assert.equal(added.notes,'Bring notes\nReview chapter 3');
+element('#task-id').value=added.id;element('#task-title').value='Updated assignment';submit();assert.equal(saved().length,10);assert.equal(saved().find(t=>t.id===added.id).title,'Updated assignment');assert.equal(pinned.length,1);
 listeners.click[0]({target:{closest:s=>s==='[data-toggle]'?{dataset:{toggle:added.id},closest:()=>({getBoundingClientRect:()=>({left:10,top:20,width:200,height:220})})}:null}});assert.equal(saved().find(t=>t.id===added.id).completed,true);
 assert.equal(effects.filter(x=>x.task).length,1);assert.equal(effects[0].task.id,added.id);listeners.click[0]({target:{closest:s=>s==='[data-undo]'?{}:null}});assert.equal(saved().find(t=>t.id===added.id).completed,false);assert.equal(effects.at(-1).cancel,added.id);
 element('#delete-task').onclick();assert.equal(saved().length,9);
