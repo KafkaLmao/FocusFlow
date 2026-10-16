@@ -12,4 +12,5 @@ await build({
   legalComments: 'linked'
 });
 await copyFile('src/components/REACT-BITS-LICENSE.md', 'dist/REACT-BITS-LICENSE.md');
+await copyFile('src/vendor/vanta/LICENSE.md', 'dist/VANTA-LICENSE.md');
 console.log('Built React Bits completion effect.');

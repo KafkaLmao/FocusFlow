@@ -49,3 +49,7 @@ Lenis uses one GSAP ticker with millisecond conversion and native touch scrollin
 ## Verification
 
 `npm test` checks task mutations, notes, progress totals, completion-event dispatch, completion undo/cancellation, deletion undo, filters, priority changes, both theme states and persistence, both workspace layouts and persistence, calendar retention, and empty-state persistence using a minimal DOM adapter. These tests do not verify browser layout or WebGL rendering. A visual browser/device check is still needed for those paths.
+
+## Vanta background
+
+Vanta DOTS 0.5.24 adds a subtle grayscale dot field behind the workspace. It shares the existing Three.js 0.180.0 bundle with PaperCrumple. The vendored effect has a small constructor adapter to accept an explicitly injected Three.js module instead of requiring a global. `showLines` is disabled and touch/mouse/gyro controls are off. Light/dark changes update the point material directly. The Background toggle persists locally; reduced motion and hidden tabs destroy the animation. Context failures retain a static background. Teardown disposes the Vanta scene and renderer. Source and MIT license: `src/vendor/vanta`, https://github.com/tengbao/vanta. Browser/GPU verification is still required.
