@@ -1,0 +1,7 @@
+.completion-paper{position:fixed;z-index:30;pointer-events:none;opacity:1;transform:translateY(0) scale(1);transition:transform .3s ease-in,opacity .3s ease-in;contain:layout style}
+.completion-paper .paper-crumple-hit{pointer-events:none;visibility:hidden!important}
+.completion-paper .paper-crumple-sr{display:none}
+.completion-paper.leaving{opacity:0;transform:translateY(35px) scale(.45)}
+.crumple-fallback{position:absolute;inset:12%;width:76%;height:76%;object-fit:contain;animation:paper-fold-away .6s ease-in forwards;transform-origin:center}
+@keyframes paper-fold-away{0%{transform:scale(1) rotate(0);opacity:1}45%{transform:scale(.55,.7) rotate(-14deg);opacity:1}100%{transform:translateY(25px) scale(.08) rotate(28deg);opacity:0}}
+@media(prefers-reduced-motion:reduce){.completion-paper{display:none}.crumple-fallback{animation:none}}
