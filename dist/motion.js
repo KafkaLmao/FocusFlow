@@ -22,7 +22,7 @@
     match=gsap.matchMedia();
     match.add('(prefers-reduced-motion: no-preference)',()=>{
       if(window.Lenis){
-        lenis=new window.Lenis({autoRaf:false,lerp:.12,syncTouch:false,prevent:node=>node.closest?.('dialog, input, textarea, select')});
+        lenis=new window.Lenis({autoRaf:false,lerp:.12,syncTouch:false,prevent:node=>node.closest?.('.sidebar, dialog, input, textarea, select')});
         tick=seconds=>lenis.raf(seconds*1000);
         gsap.ticker.add(tick);
       }
