@@ -32,7 +32,7 @@ There is no backend, account or cross-device synchronization. Browser data stays
 
 ## State management
 
-`dist/app.js` owns a task array containing `id`, `title`, optional `notes`, `subject`, `deadline`, `priority` and `completed`. Every mutation goes through `save()`, which stores the array in the existing `focusflow.tasks.v1` local-storage key and rerenders derived lists, statistics and calendar markers. Existing saved tasks are compatible; no migration or reset is required. Deadline comparisons use local calendar dates. First launch seeds sample tasks relative to the current date.
+`dist/app.js` owns a task array containing `id`, `title`, optional `notes`, `subject`, `deadline`, `priority`, `completed`, optional `plannedFor` and optional `completedAt`. Every mutation goes through `save()`, which stores the array in the existing `focusflow.tasks.v1` local-storage key and rerenders derived lists, statistics and calendar markers. Existing saved tasks are compatible; no migration or reset is required. Deadline comparisons use local calendar dates. First launch seeds sample tasks relative to the current date.
 
 Search, filters, navigation and one-step undo are session state. `focusflow.layout` and `focusflow.theme` persist separately. Completing a task saves immediately, then calls an optional presentation-only React island. The animation never owns or delays task state.
 
@@ -61,3 +61,14 @@ New assignments in Bulletin get a GSAP paper-settle and pushpin-press animation.
 ## Overall Slosh Gauge
 
 The right column shows the React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. The existing React island renders a read-only gauge with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Reduced motion settles the liquid immediately. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component. The calendar remains directly below the gauge.
+
+## Daily workflow improvements
+
+- **Do today** plans a task for the current local date without changing its deadline. It appears in My day under Planned for today. The editor has the same planning checkbox. Planning/unplanning supports Undo. The daily ring counts tasks due today plus tasks planned today; the right-hand gauge still counts all assignments.
+- **All assignments** includes active and completed work. The priority board contains unfinished tasks; Completed contains completed tasks. New completions record an ISO timestamp, preserved when editing and restored by Undo. Existing tasks remain compatible; old completion timestamps are not invented.
+- **Calendar** has previous/next month buttons and selectable days. A selected day filters assignments by deadline. New assignments default to that day. Back to today returns to the daily view.
+- **Filtering** shows active filters and a Clear filters action. Sidebar navigation clears stale filters; search includes notes. Sorting supports deadline, priority or title.
+- **Backup** exports a versioned JSON file locally. Import validates the entire file before merging missing IDs and keeps existing tasks unchanged. Malformed, duplicate, oversized and impossible-date records are rejected. If storage is full, nothing is merged. No files are uploaded. Backups provide manual portability; they are not automatic cloud sync.
+- **Accessibility** adds native date buttons, selected navigation states and keyboard focus restoration after completing/planning tasks.
+
+`npm test` now also runs `workflow-test.cjs`, covering actual view scopes, unchanged deadlines during planning, completion history, undo, calendar navigation and date filtering, notes search, sorting, strict backup validation, idempotent import and atomic storage failure. These are state/DOM-adapter checks, not visual browser or device checks.
