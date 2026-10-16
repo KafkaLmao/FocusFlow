@@ -57,3 +57,7 @@ Vanta DOTS 0.5.24 adds a subtle grayscale dot field behind the workspace. It sha
 ## New-note pinning
 
 New assignments in Bulletin get a GSAP paper-settle and pushpin-press animation. The note remains immediately usable; reduced motion shows the final pinned state directly. Existing tasks do not animate on edit or reload. A new assignment that does not match the current daily/completed view or filters is revealed in the appropriate list. `dist/pin.js` owns and cleans up the short animation; the pin is decorative SVG and follows the theme.
+
+## Overall Slosh Gauge
+
+The right column shows the React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. The existing React island renders a read-only gauge with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Reduced motion settles the liquid immediately. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component. The calendar remains directly below the gauge.

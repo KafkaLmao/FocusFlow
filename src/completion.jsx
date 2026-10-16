@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import PaperCrumple from './components/PaperCrumple.jsx';
 import './completion.css';
 import './background.js';
+import './progress.jsx';
 
 // React is isolated to this effect. Task state is committed by app.js before
 // this optional visual runs; loading/WebGL failures can never lose a task.
