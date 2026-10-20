@@ -11,6 +11,7 @@ const submit=()=>element('#task-form').onsubmit({preventDefault(){}});
 element('#task-id').value='';element('#task-title').value='Test assignment';element('#task-notes').value='Bring notes\nReview chapter 3';element('#task-subject').value='Testing';element('#task-deadline').value='2099-01-01';element('#task-priority').value='High';submit();assert.equal(saved().length,10);
 const added=saved().find(t=>t.title==='Test assignment');assert.ok(added);assert.deepEqual(pinned,[added.id]);assert.equal(added.notes,'Bring notes\nReview chapter 3');
 element('#task-id').value=added.id;element('#task-title').value='Updated assignment';submit();assert.equal(saved().length,10);assert.equal(saved().find(t=>t.id===added.id).title,'Updated assignment');assert.equal(pinned.length,1);
+element('#bulletin-layout').onclick();
 listeners.click[0]({target:{closest:s=>s==='[data-toggle]'?{dataset:{toggle:added.id},closest:()=>({getBoundingClientRect:()=>({left:10,top:20,width:200,height:220})})}:null}});assert.equal(saved().find(t=>t.id===added.id).completed,true);assert.equal(progress.at(-1).completed,3);assert.equal(progress.at(-1).total,10);
 assert.equal(effects.filter(x=>x.task).length,1);assert.equal(effects[0].task.id,added.id);listeners.click[0]({target:{closest:s=>s==='[data-undo]'?{}:null}});assert.equal(saved().find(t=>t.id===added.id).completed,false);assert.equal(effects.at(-1).cancel,added.id);assert.equal(progress.at(-1).completed,2);assert.equal(progress.at(-1).total,10);
 element('#delete-task').onclick();assert.equal(saved().length,9);

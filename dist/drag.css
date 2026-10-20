@@ -4,7 +4,6 @@
 .task:not(.done){cursor:grab}
 .drag-handle{display:grid;place-items:center;flex:0 0 28px;width:28px;min-height:36px;padding:4px;color:var(--muted);border-radius:4px;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .drag-handle:active{cursor:grabbing}
-.sticky-note .drag-handle{position:absolute;top:-10px;left:calc(50% - 22px);width:44px;height:44px;z-index:3;background:var(--side);border:1px solid var(--line);border-radius:50%;box-shadow:0 2px 3px #0001}
 .sticky-note:not(.done) .note-pin{display:none}
 .board .drag-handle{flex-basis:28px}
 .board-column{transition:border-color 140ms,background-color 140ms}
@@ -14,8 +13,8 @@
 html{scrollbar-gutter:stable}
 .assignment-dragging,.assignment-dragging body{scroll-behavior:auto!important;overflow:hidden!important;overscroll-behavior:none;touch-action:none}
 .drag-preview{position:fixed;top:0;left:0;display:block!important;margin:0!important;padding:0!important;z-index:100;pointer-events:none;will-change:transform}
-.drag-preview .task{margin:0!important;padding:20px!important;background:var(--side)!important;border:1px solid var(--muted)!important;border-radius:6px;box-shadow:0 18px 45px #0003;transform:rotate(2deg)!important;opacity:1;min-height:0}
-.drag-preview.note-grid .task{display:grid;min-height:240px}
+.drag-preview .task{margin:0!important;padding:18px!important;background:var(--panel)!important;border:1px solid var(--line)!important;border-radius:9px;box-shadow:0 15px 45px #0002;transform:none!important;opacity:1;min-height:0}
+.drag-preview.note-grid .task{display:grid;min-height:190px}
 .drag-preview .drag-handle{display:none}
 .drag-preview:not(.note-grid) .task{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:start}
 .drag-preview:not(.note-grid) .check{grid-area:1/1}
