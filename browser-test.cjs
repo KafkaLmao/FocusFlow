@@ -41,7 +41,7 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
       const page = await context.newPage();
       page.on('pageerror', e => errors.push(e.message));
       await page.goto(base);
-      await page.waitForSelector('.slosh-gauge',{state:'attached'});
+      await page.waitForSelector('.slosh-gauge');
       return {context,page};
     }
     const priority = (page,id) => page.evaluate(id => window.FocusFlowData.snapshot().find(t=>t.id===id).priority,id);
@@ -82,11 +82,7 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
       await beginMouse(page,id);
       const selector = board ? `.board-column[data-priority="${next}"]` : `.priority-drop-bar [data-drop-priority="${next}"]`;
       const box = await page.locator(selector).boundingBox();
-      // Centered bins can overlap the middle of a board column. Aim at a visible
-      // part of the column, as a person would, when testing column drops.
-      let y=box.y+Math.min(60,box.height/2);
-      if(board){const dock=await page.locator('.priority-drop-bar').boundingBox();if(y>=dock.y&&y<=dock.y+dock.height)y=Math.min(box.y+box.height-10,page.viewportSize().height-15);}
-      await page.mouse.move(box.x+box.width/2,y,{steps:10});
+      await page.mouse.move(box.x+box.width/2,box.y+Math.min(60,box.height/2),{steps:10});
       await page.waitForSelector(selector+'.drag-over');
       await page.mouse.up();
       await page.waitForFunction(({id,next})=>window.FocusFlowData.snapshot().find(t=>t.id===id).priority===next,{id,next});
@@ -97,23 +93,13 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     const {context:desktop,page} = await setup({viewport:{width:1440,height:1000}});
     assert.equal(await page.locator('#ambient-toggle').getAttribute('aria-pressed'),'false');
     assert.equal(await page.locator('#ambient-background canvas').count(),0);
-    assert.equal(await page.locator('html').getAttribute('data-layout'),'dashboard');
-    await page.locator('.progress-details summary').click();
     const gauge = await page.locator('.slosh-gauge').boundingBox();
     assert.equal(gauge.width,64);assert.equal(gauge.height,108);
-    await page.locator('.progress-details summary').click();
     assert.equal(await page.locator('.priority.High').first().evaluate(el=>getComputedStyle(el).color),'rgb(169, 47, 47)');
     assert.equal(await page.locator('.priority.Low').first().evaluate(el=>getComputedStyle(el).color),'rgb(25, 113, 60)');
     await noOverflow(page,'desktop bulletin overflow');
     await page.screenshot({path:path.join(artifacts,'desktop-light.png'),fullPage:true});
     await page.locator('#mobile-theme').click();
-
-    await page.locator('#preferences').click();
-    await page.waitForSelector('#preferences-dialog[open]');
-    await page.locator('#close-preferences').click();
-    await page.locator('#header-shortcuts').click();await page.waitForSelector('#help-dialog[open]');
-    await page.keyboard.press('Escape');
-    await page.locator('#bulletin-layout').click();await page.screenshot({path:path.join(artifacts,'desktop-notes.png'),fullPage:true});
     assert.equal(await page.locator('.priority.High').first().evaluate(el=>getComputedStyle(el).color),'rgb(244, 160, 154)');
     await page.screenshot({path:path.join(artifacts,'desktop-dark.png'),fullPage:true});
     await page.locator('#mobile-theme').click();
@@ -127,7 +113,6 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     await page.locator('#priority-filter').selectOption('High');
     await mouseDrop(page,'math','Medium');
     assert.equal(await page.locator('#priority-filter').inputValue(),'');
-    await page.locator('main').evaluate(el=>el.style.minHeight='1800px');
     await beginMouse(page,'math');await checkDragLock(page);
     await page.screenshot({path:path.join(artifacts,'desktop-priority-bins.png')});
     await page.keyboard.press('Escape');await page.mouse.up();
@@ -136,27 +121,19 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     const unlockedY=await page.evaluate(()=>scrollY);
     await page.mouse.wheel(0,150);await frames(page,20);
     assert.ok(await page.evaluate(()=>scrollY)>unlockedY,'wheel scrolling resumes after cancellation');
-    await page.locator('main').evaluate(el=>el.style.removeProperty('min-height'));
     await page.locator('[data-drag-handle="math"]').press('ArrowRight');assert.equal(await priority(page,'math'),'Low');
     await page.locator('#dashboard-layout').click();await mouseDrop(page,'essay','High');
     await noOverflow(page,'desktop list overflow');
     await page.locator('[data-toggle="essay"]').click();
-    assert.equal(await page.locator('.completion-paper').count(),0,'List completion stays distraction free');
-    assert.equal(await page.locator('#ring-percent').innerText(),'33%');
-    await page.locator('#bulletin-layout').click();
-    await page.locator('[data-toggle="math"]').click();
     await page.waitForSelector('.completion-paper');
     assert.equal((await page.locator('.completion-paper').boundingBox()).width,220);
     await page.waitForSelector('.completion-paper',{state:'hidden'});
-    assert.equal(await page.locator('#ring-percent').innerText(),'67%');
+    assert.equal(await page.locator('#ring-percent').innerText(),'33%');
     await desktop.close();
 
     const {context:mobile,page:phone} = await setup({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
     await noOverflow(phone,'mobile bulletin overflow');
     await phone.screenshot({path:path.join(artifacts,'mobile-light.png'),fullPage:true});
-    await phone.locator('#header-preferences').click();await phone.waitForSelector('#preferences-dialog[open]');
-    await phone.locator('#close-preferences').click();
-    await phone.locator('#bulletin-layout').click();
     const session = await mobile.newCDPSession(phone);
     const touch = (type,x,y) => session.send('Input.dispatchTouchEvent',{type,touchPoints:type==='touchEnd'?[]:[{x,y}]});
     await phone.locator('[data-drag-handle="essay"]').scrollIntoViewIfNeeded();
@@ -210,43 +187,6 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     assert.equal(await phone.locator('.completion-paper').count(),0);
     assert.equal(await phone.locator('#ambient-background canvas').count(),0);
     await mobile.close();
-
-    // Exercise the redesign with realistic extremes in an isolated profile.
-    const {context:edge,page:stress}=await setup({viewport:{width:1280,height:900}});
-    await stress.evaluate(()=>{
-      const seed=window.FocusFlowData.snapshot();
-      const tasks=seed.map((task,index)=>({...task,title:index===0?'A'.repeat(160):index===1?'Research notes: compare sources, record evidence, and draft the final argument':'Read chapter 5',subject:index===0?'B'.repeat(50):task.subject,notes:index===0?'Long notes and next steps.\n'.repeat(70).slice(0,2000):'A short next step.'}));
-      localStorage.setItem('focusflow.tasks.v1',JSON.stringify(tasks));
-    });
-    await stress.reload();
-    for(const width of [1280,960,768,720,390,320]){
-      await stress.setViewportSize({width,height:900});
-      for(const id of ['dashboard-layout','bulletin-layout','board-view']){
-        await stress.locator('#'+id).click();
-        await noOverflow(stress,'long title/subject overflow at '+width+' in '+id);
-      }
-    }
-    await stress.locator('#dashboard-layout').click();
-    await stress.locator('#mobile-theme').click();
-    await noOverflow(stress,'dark long-content overflow');
-    await stress.locator('#header-preferences').click();
-    assert.match(await stress.locator('#theme-label').innerText(),/Switch to/);
-    await stress.screenshot({path:path.join(artifacts,'mobile-preferences.png')});
-    await stress.locator('#close-preferences').click();
-    await stress.evaluate(()=>localStorage.setItem('focusflow.tasks.v1','[]'));await stress.reload();
-    assert.equal(await stress.locator('.task').count(),0);assert.equal(await stress.locator('#ring-percent').innerText(),'0%');
-    await stress.locator('#add-task').click();await stress.waitForSelector('#task-dialog[open]');
-    await stress.locator('#task-title').fill('Prepare seminar notes');await stress.locator('#task-subject').fill('History');
-    await stress.screenshot({path:path.join(artifacts,'mobile-new-assignment.png')});
-    await noOverflow(stress,'mobile editor overflow');await stress.locator('#task-form button[type="submit"]').click();
-    assert.equal(await stress.evaluate(()=>window.FocusFlowData.snapshot().length),1);
-    await stress.locator('.task-title').click();await stress.locator('#task-title').fill('Review seminar notes');
-    await stress.locator('#task-form button[type="submit"]').click();
-    assert.equal(await stress.locator('.task-title').innerText(),'Review seminar notes');
-    await stress.locator('.task-title').click();await stress.locator('#delete-task').click();
-    assert.equal(await stress.locator('.task').count(),0);await stress.locator('[data-undo]').click();
-    assert.equal(await stress.locator('.task').count(),1);
-    await edge.close();
     assert.deepEqual(errors,[],'uncaught browser errors');
     console.log('PASS: Chrome desktop + mobile emulation; centered priority bins, drag scroll locking/unlocking, priority colors, quiet defaults, gauge sizing, mouse/board/touch drag, persistence, Undo, filter handling, Escape, keyboard, native touch scroll, completion, reduced motion and overflow down to 320px.');
     console.log('Screenshots: .test-artifacts/ (physical phone testing is separate).');

@@ -1,6 +1,6 @@
 # FocusFlow
 
-A minimal student productivity workspace built around a compact daily list, simple Notes cards and a priority board. Neutral surfaces, system typography and a restrained green accent keep assignments prominent. Task data and appearance preferences are shared across the views.
+A monochrome student productivity workspace with two interchangeable layouts: a sticky-note bulletin and the regular dashboard. Task data and appearance preferences are shared across both layouts.
 
 ## Run and build
 
@@ -14,20 +14,19 @@ npm run build
 npm test
 ```
 
-There is no backend, account or cross-device synchronization. Browser data stays on this device. The static output includes React, React DOM, Three.js, GSAP and Lenis locally. Typography uses local system fonts; no font requests are needed.
+There is no backend, account or cross-device synchronization. Browser data stays on this device. The static output includes React, React DOM, Three.js, GSAP and Lenis locally; Google Fonts have system-font fallbacks.
 
 ## Features
 
 - Create, edit, delete and complete assignments with a title, subject, deadline and priority.
 - Optional multiline notes for ideas, checklists and next steps.
-- List/Notes/Board controls in the task header. List is the new-visitor default; existing saved layout preferences are respected. Switching layouts preserves all tasks, filters and completion states.
-- A compact daily overview, quieter calendar and upcoming deadlines, expandable all-time progress, and a Preferences dialog for appearance and the optional background. Mobile uses four labeled bottom navigation actions.
+- Bulletin/Dashboard selector, persisted independently from dark/light preference. Switching layouts preserves all tasks, filters and completion states.
 - Daily tasks, overdue tasks, upcoming deadlines and completed views.
 - Search plus subject/priority filters; drag-and-drop priority board with a keyboard/touch editing alternative.
 - Physical card dragging with mouse, pen or touch: use the six-dot grip on any unfinished assignment. A lifted card follows the pointer; drop into a board column or the centered High/Medium/Low bins. While a note is picked up, page scrolling is locked (wheel, touch, keyboard and smooth-scroll inertia); normal scrolling returns after a drop or cancellation. Touch scrolling stays available on the card body outside a drag. Escape, an outside drop or an interrupted gesture cancels. Priority changes persist and support Undo. Focus a grip and use Left/Right or Home/End for the same action with the keyboard.
 - Current-month calendar with deadline markers, retained on mobile, and the next seven days of deadlines.
 - SVG daily completion ring, with no CSS gradients.
-- List and Board completions update immediately without a decorative effect. Notes completion briefly crumples a small paper representation using the actual React Bits PaperCrumple component. Rapid completions retain only the latest waiting effect; undo cancels the matching effect. WebGL failures use a small CSS fallback. Reduced motion skips decorative completion animation.
+- Completion briefly crumples a small paper representation of the task using the actual React Bits PaperCrumple component. The effect plays in both layouts. Rapid completions retain only the latest waiting effect; undo cancels the matching effect. WebGL failures use a small CSS fallback. Reduced motion skips decorative completion animation.
 - Undo the most recent completion/uncompletion or deletion using the toast's Undo button or Ctrl/Cmd+Z. Completed tasks remain accessible in Completed and can be marked incomplete there at any time.
 - Shortcuts: N to create, / to search, 1/2/3 to navigate, ? for help, Escape to close dialogs.
 - Local persistence, cross-tab task/theme/layout updates, storage-failure feedback, and an intentionally empty task list remains empty.
@@ -64,7 +63,7 @@ New assignments in Bulletin get a GSAP paper-settle and pushpin-press animation.
 
 ## Overall Slosh Gauge
 
-The expandable All-time progress section retains the compact, static React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. It is collapsed by default to keep the daily ring and tasks prominent. The 64 x 108 gauge updates without liquid bounce. The existing React island renders it read-only with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component.
+The right column shows a compact, static React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. The 64 x 108 gauge updates without liquid bounce, keeping the daily ring and tasks visually dominant. The existing React island renders it read-only with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component. The calendar remains directly below the gauge.
 
 ## Daily workflow improvements
 
