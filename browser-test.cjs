@@ -56,6 +56,27 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
       const x=box.x+box.width/2,y=box.y+box.height/2;
       await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+20,y+14,{steps:4});
       await page.waitForSelector('.priority-drop-bar:not([hidden])');
+      assert.ok((await page.locator('.drag-preview .task-info').boundingBox()).width>100,'lifted note text needs readable width');
+      assert.ok((await page.locator('.drag-preview').boundingBox()).height<450,'lifted note should keep its card proportions');
+    }
+    const frames = (page,count=8) => page.evaluate(count=>new Promise(resolve=>{
+      const tick=()=>--count>0?requestAnimationFrame(tick):resolve();requestAnimationFrame(tick);
+    }),count);
+    async function checkDragLock(page) {
+      const before=await page.evaluate(()=>scrollY);
+      const binBox=await page.locator('.priority-drop-bar').boundingBox();
+      const viewport=page.viewportSize();
+      assert.ok(Math.abs(binBox.y+binBox.height/2-viewport.height/2)<2,'bins should be vertically centered');
+      assert.ok(Math.abs(binBox.x+binBox.width/2-viewport.width/2)<10,'bins should be horizontally centered');
+      assert.equal(await page.locator('.priority-bin svg').count(),3);
+      assert.equal(await page.evaluate(()=>getComputedStyle(document.documentElement).overflow),'hidden');
+      assert.equal(await page.locator('html').evaluate(el=>el.classList.contains('lenis-stopped')||matchMedia('(prefers-reduced-motion: reduce)').matches),true);
+      await page.mouse.move(viewport.width-30,viewport.height-2);
+      await page.mouse.wheel(0,650);await page.keyboard.press('PageDown');
+      await frames(page);
+      assert.equal(await page.evaluate(()=>scrollY),before,'wheel, keyboard and bottom edge must not scroll during drag');
+      await page.mouse.move(viewport.width-30,2);await frames(page);
+      assert.equal(await page.evaluate(()=>scrollY),before,'top edge must not scroll during drag');
     }
     async function mouseDrop(page,id,next,board=false) {
       await beginMouse(page,id);
@@ -92,9 +113,14 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     await page.locator('#priority-filter').selectOption('High');
     await mouseDrop(page,'math','Medium');
     assert.equal(await page.locator('#priority-filter').inputValue(),'');
-    await beginMouse(page,'math');await page.keyboard.press('Escape');await page.mouse.up();
+    await beginMouse(page,'math');await checkDragLock(page);
+    await page.screenshot({path:path.join(artifacts,'desktop-priority-bins.png')});
+    await page.keyboard.press('Escape');await page.mouse.up();
     assert.equal(await priority(page,'math'),'Medium');
     assert.equal(await page.locator('.drag-preview').count(),0);
+    const unlockedY=await page.evaluate(()=>scrollY);
+    await page.mouse.wheel(0,150);await frames(page,20);
+    assert.ok(await page.evaluate(()=>scrollY)>unlockedY,'wheel scrolling resumes after cancellation');
     await page.locator('[data-drag-handle="math"]').press('ArrowRight');assert.equal(await priority(page,'math'),'Low');
     await page.locator('#dashboard-layout').click();await mouseDrop(page,'essay','High');
     await noOverflow(page,'desktop list overflow');
@@ -115,6 +141,11 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     await touch('touchStart',box.x+box.width/2,box.y+box.height/2);
     await touch('touchMove',box.x+box.width/2,box.y+box.height/2+25);
     await phone.waitForSelector('.priority-drop-bar:not([hidden])');
+    const lockedTouchY=await phone.evaluate(()=>scrollY);
+    await touch('touchMove',380,2);await frames(phone);
+    assert.equal(await phone.evaluate(()=>scrollY),lockedTouchY,'touch and top edge do not scroll during drag');
+    await touch('touchMove',380,840);await frames(phone);
+    assert.equal(await phone.evaluate(()=>scrollY),lockedTouchY,'touch and bottom edge do not scroll during drag');
     box=await phone.locator('.priority-drop-bar [data-drop-priority="Low"]').boundingBox();
     await touch('touchMove',box.x+box.width/2,box.y+box.height/2);
     await phone.waitForSelector('.priority-drop-zone.drag-over');
@@ -126,6 +157,7 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     await phone.waitForFunction(()=>window.FocusFlowData.snapshot().find(t=>t.id==='essay').priority==='Low');
     assert.equal(await savedPriority(phone,'essay'),'Low');
     assert.equal(await phone.locator('.drag-preview').count(),0);
+    assert.equal(await phone.locator('html').evaluate(el=>el.classList.contains('assignment-dragging')),false);
 
     // Swiping the body scrolls normally, rather than accidentally dragging.
     await phone.evaluate(()=>scrollTo(0,0));
@@ -145,13 +177,18 @@ const {chromium} = require(process.env.FOCUSFLOW_PLAYWRIGHT || 'playwright');
     await phone.locator('#dashboard-layout').click();await noOverflow(phone,'mobile list overflow');
     await phone.setViewportSize({width:320,height:740});await noOverflow(phone,'320px list overflow');
     await phone.locator('#bulletin-layout').click();await noOverflow(phone,'320px bulletin overflow');
+    await beginMouse(phone,'math');await noOverflow(phone,'320px priority bins overflow');
+    const compactBins=await phone.locator('.priority-drop-bar').boundingBox();
+    assert.ok(compactBins.x>=0&&compactBins.x+compactBins.width<=320,'all priority bins fit on a small phone');
+    await phone.screenshot({path:path.join(artifacts,'mobile-small-priority-bins-dark.png')});
+    await phone.keyboard.press('Escape');await phone.mouse.up();
     await phone.emulateMedia({reducedMotion:'reduce'});
     await phone.locator('[data-toggle="bio"]').click();
     assert.equal(await phone.locator('.completion-paper').count(),0);
     assert.equal(await phone.locator('#ambient-background canvas').count(),0);
     await mobile.close();
     assert.deepEqual(errors,[],'uncaught browser errors');
-    console.log('PASS: Chrome desktop + mobile emulation; priority colors, quiet defaults, gauge sizing, mouse/board/touch drag, persistence, Undo, filter handling, Escape, keyboard, native touch scroll, completion, reduced motion and overflow down to 320px.');
+    console.log('PASS: Chrome desktop + mobile emulation; centered priority bins, drag scroll locking/unlocking, priority colors, quiet defaults, gauge sizing, mouse/board/touch drag, persistence, Undo, filter handling, Escape, keyboard, native touch scroll, completion, reduced motion and overflow down to 320px.');
     console.log('Screenshots: .test-artifacts/ (physical phone testing is separate).');
   } finally {
     await browser?.close();

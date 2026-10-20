@@ -17,6 +17,10 @@
   [['[data-view="today"]>span:first-child','day'],['[data-view="all"]>span:first-child','list'],['[data-view="board"]>span:first-child','board'],['[data-view="completed"]>span:first-child','check'],['.stat-icon.green','day'],['.stat-icon.orange','clock'],['.stat-icon.purple','calendar'],['.search>span','search'],['#theme>span:first-child','moon'],['#shortcuts>span:first-child','keys']].forEach(([s,n])=>icon(s,n));
   document.querySelectorAll('.sidebar [data-view]').forEach(el=>el.setAttribute('aria-label',({today:'My day',all:'All assignments',board:'Priority board',completed:'Completed assignments'})[el.dataset.view]));
   let lenis, tick, context, match, observer;
+  function syncScrollLock(){
+    const locked=!!document.querySelector('dialog[open]')||document.documentElement.classList.contains('assignment-dragging');
+    if(locked)lenis?.stop();else lenis?.start();
+  }
   function setup(){
     if(!gsap)return;
     match=gsap.matchMedia();
@@ -25,6 +29,7 @@
         lenis=new window.Lenis({autoRaf:false,lerp:.12,syncTouch:false,prevent:node=>node.closest?.('.sidebar, dialog, input, textarea, select')});
         tick=seconds=>lenis.raf(seconds*1000);
         gsap.ticker.add(tick);
+        syncScrollLock();
       }
       context=gsap.context(()=>{
         gsap.timeline({defaults:{ease:'power3.out'}})
@@ -34,11 +39,9 @@
       },document.body);
       return ()=>{if(tick)gsap.ticker.remove(tick);lenis?.destroy();lenis=null;tick=null;context?.revert();};
     });
-    observer=new MutationObserver(()=>{
-      const open=!!document.querySelector('dialog[open]');
-      if(open)lenis?.stop();else lenis?.start();
-    });
+    observer=new MutationObserver(syncScrollLock);
     document.querySelectorAll('dialog').forEach(d=>observer.observe(d,{attributes:true,attributeFilter:['open']}));
+    observer.observe(document.documentElement,{attributes:true,attributeFilter:['class']});
   }
   function feedback(e){
     if(!gsap||reduce.matches)return;

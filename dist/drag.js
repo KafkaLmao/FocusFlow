@@ -5,8 +5,8 @@
   dock.className = 'priority-drop-bar';
   dock.hidden = true;
   dock.setAttribute('aria-label', 'Drop assignment to change priority');
-  dock.innerHTML = '<p>Drop to set priority <span>Esc to cancel</span></p><div>' +
-    priorities.map(p => `<div class="priority-drop-zone" data-drop-priority="${p}"><span class="priority ${p}">${p}</span><small>Drop here</small></div>`).join('') + '</div>';
+  dock.innerHTML = '<p>Drop a note into a priority bin <span>Esc to cancel</span></p><div>' +
+    priorities.map(p => `<div class="priority-drop-zone" data-drop-priority="${p}" aria-label="${p} priority bin"><div class="priority-bin"><svg viewBox="0 0 140 148" aria-hidden="true"><ellipse class="bin-shadow" cx="70" cy="139" rx="45" ry="5"/><path class="bin-body" d="M24 38h92l-11 91c-22 10-48 10-70 0Z"/><path class="bin-ribs" d="m46 55 5 69m19-67v71m24-73-5 69"/><ellipse class="bin-rim" cx="70" cy="38" rx="48" ry="12"/><ellipse class="bin-opening" cx="70" cy="37" rx="39" ry="6"/><g class="bin-paper"><rect x="55" y="5" width="30" height="38" rx="3"/><path d="M62 16h16m-16 7h16m-16 7h10"/></g></svg><span class="priority ${p}">${p}</span></div><small>Drop note here</small></div>`).join('') + '</div>';
   const status = document.createElement('div');
   status.className = 'drag-status';
   status.setAttribute('role', 'status');
@@ -59,17 +59,9 @@
   function tick() {
     const g = gesture;
     if (!g?.active) return;
-    // Native scrolling outside the grip remains available. While dragging, scroll
-    // near viewport edges so stacked mobile board columns can be reached.
-    const edge = 64;
     const bottom = dock.getBoundingClientRect().top;
-    const overDock = g.y >= bottom;
-    let dy = 0;
-    if (g.y < edge) dy = -Math.ceil((edge - Math.max(g.y, 0)) / 5);
-    else if (!overDock && g.y > bottom - edge) dy = Math.ceil((g.y - bottom + edge) / 5);
-    if (dy) window.scrollBy({top: dy, behavior: 'instant'});
-    // Keep the lifted card inside the viewport and above the drop bar so it
-    // cannot hide the destination, especially under a finger on a narrow screen.
+    // The page stays still. Keep the lifted note above the centered bins so the
+    // destinations stay visible under a pointer or finger.
     const x = Math.max(8, Math.min(window.innerWidth - g.preview.offsetWidth - 8, g.x - g.offsetX));
     const y = Math.max(8, Math.min(bottom - g.preview.offsetHeight - 12, g.y - g.offsetY));
     g.preview.style.transform = `translate3d(${x}px, ${y}px, 0)`;
@@ -125,6 +117,13 @@
   }, {passive: false});
 
   document.addEventListener('selectstart', e => {if (gesture) e.preventDefault();});
+  function preventScroll(e) {
+    if (!gesture?.active) return;
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  document.addEventListener('wheel', preventScroll, {passive: false, capture: true});
+  document.addEventListener('touchmove', preventScroll, {passive: false, capture: true});
 
   document.addEventListener('pointerup', e => {
     if (e.pointerId !== gesture?.pointerId) return;
@@ -164,6 +163,11 @@
       e.preventDefault();
       e.stopImmediatePropagation();
       finish();
+      return;
+    }
+    if (gesture?.active && [' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
       return;
     }
     const grip = e.target.closest('[data-drag-handle]');

@@ -5,7 +5,7 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 
 function boot() {
-  const handlers={},windowHandlers={},changes=[],frames=new Map(),captures=new Set();
+  const handlers={},windowHandlers={},changes=[],frames=new Map(),captures=new Set(),scrolls=[];
   let time=0,nextFrame=0,hit=null,mutation;
   function node(classes='') {
     const tokens=new Set(classes.split(' ').filter(Boolean));
@@ -26,14 +26,14 @@ function boot() {
     querySelector:s=>s==='dialog[open]'?null:node(),querySelectorAll:()=>[grip],
     elementFromPoint:()=>hit,addEventListener:(type,fn)=>(handlers[type]??=[]).push(fn)};
   const task={id:'assignment',title:'Write essay',priority:'High',completed:false};
-  const window={innerWidth:390,scrollBy(){},addEventListener:(type,fn)=>windowHandlers[type]=fn,
+  const window={innerWidth:390,scrollBy(...args){scrolls.push(args);},addEventListener:(type,fn)=>windowHandlers[type]=fn,
     FocusFlowData:{snapshot:()=>[task],notify(){},changePriority(id,p){if(task.priority===p)return false;changes.push([id,p]);task.priority=p;return true;}}};
   vm.runInNewContext(fs.readFileSync(__dirname+'/dist/drag.js','utf8'),{document,window,performance:{now:()=>time},
     requestAnimationFrame:fn=>{frames.set(++nextFrame,fn);return nextFrame;},cancelAnimationFrame:id=>frames.delete(id),
     MutationObserver:class {constructor(fn){mutation=fn;}observe(){}},console});
-  const event=(type,extra={})=>{const e={target:grip,button:0,isPrimary:true,pointerId:1,pointerType:'mouse',clientX:100,clientY:220,preventDefault(){this.prevented=true;},stopImmediatePropagation(){this.stopped=true;},...extra};for(const fn of handlers[type]||[])fn(e);return e;};
+  const event=(type,extra={})=>{const e={target:grip,button:0,isPrimary:true,pointerId:1,pointerType:'mouse',clientX:100,clientY:220,preventDefault(){this.prevented=true;},stopPropagation(){this.stopped=true;},stopImmediatePropagation(){this.stopped=true;},...extra};for(const fn of handlers[type]||[])fn(e);return e;};
   const drop=p=>{hit=node();hit.dataset.dropPriority=p;hit.closest=()=>hit;return hit;};
-  return {event,drop,task,card,grip,button,changes,root,captures,body,frames,document,windowHandlers,
+  return {event,drop,task,card,grip,button,changes,root,captures,body,frames,document,windowHandlers,scrolls,
     dock:body.children[0],status:body.children[1],mutate:()=>mutation(),
     miss:()=>{hit=null;},advance:()=>{time+=500;},tick:()=>{const batch=[...frames.values()];frames.clear();batch.forEach(fn=>fn());}};
 }
@@ -66,7 +66,25 @@ test('cancel, outside release, lost capture, blur and source removal leave state
     else a.event(reason,{target:a.root});
     assert.deepEqual(a.changes,[],reason);assert.equal(a.dock.hidden,true,reason);assert.equal(a.frames.size,0,reason);
     assert.equal(a.captures.size,0,reason);
+    assert.equal(a.root.classList.contains('assignment-dragging'),false,reason);
+    assert.equal(a.event('wheel').prevented,undefined,reason);
   }
+});
+
+test('active dragging blocks wheel, touch and keyboard scrolling, with no edge scrolling',()=>{
+  const a=boot();
+  assert.equal(a.event('wheel').prevented,undefined);
+  assert.equal(a.event('touchmove').prevented,undefined);
+  a.event('pointerdown');a.event('pointermove',{clientY:2});
+  assert.equal(a.root.classList.contains('assignment-dragging'),true);
+  for(const type of ['wheel','touchmove'])assert.equal(a.event(type).prevented,true,type);
+  for(const key of [' ','PageDown','PageUp','Home','End','ArrowDown','ArrowUp'])assert.equal(a.event('keydown',{key}).prevented,true,key);
+  for(let n=0;n<10;n++)a.tick();
+  assert.deepEqual(a.scrolls,[]);
+  a.event('pointerup');
+  assert.equal(a.root.classList.contains('assignment-dragging'),false);
+  assert.equal(a.event('wheel').prevented,undefined);
+  assert.equal(a.event('touchmove').prevented,undefined);
 });
 
 test('touch grip drags, while card body, buttons, completed tasks and secondary pointers stay usable',()=>{
