@@ -1,6 +1,6 @@
 # FocusFlow
 
-A monochrome student productivity workspace with two interchangeable layouts: a sticky-note bulletin and the regular dashboard. Task data and appearance preferences are shared across both layouts.
+A mostly monochrome student productivity workspace with restrained deep red accents and two interchangeable layouts: a sticky-note bulletin and the regular dashboard. Task data and appearance preferences are shared across both layouts.
 
 ## Run and build
 
@@ -25,7 +25,7 @@ There is no backend, account or cross-device synchronization. Browser data stays
 - Search plus subject/priority filters; drag-and-drop priority board with a keyboard/touch editing alternative.
 - Physical card dragging with mouse, pen or touch: use the six-dot grip on any unfinished assignment. A lifted card follows the pointer; drop into a board column or the centered High/Medium/Low bins. While a note is picked up, page scrolling is locked (wheel, touch, keyboard and smooth-scroll inertia); normal scrolling returns after a drop or cancellation. Touch scrolling stays available on the card body outside a drag. Escape, an outside drop or an interrupted gesture cancels. Priority changes persist and support Undo. Focus a grip and use Left/Right or Home/End for the same action with the keyboard.
 - Current-month calendar with deadline markers, retained on mobile, and the next seven days of deadlines.
-- SVG daily completion ring, with no CSS gradients.
+- SVG daily completion ring with a subtle burgundy gradient.
 - Completion briefly crumples a small paper representation of the task using the actual React Bits PaperCrumple component. The effect plays in both layouts. Rapid completions retain only the latest waiting effect; undo cancels the matching effect. WebGL failures use a small CSS fallback. Reduced motion skips decorative completion animation.
 - Undo the most recent completion/uncompletion or deletion using the toast's Undo button or Ctrl/Cmd+Z. Completed tasks remain accessible in Completed and can be marked incomplete there at any time.
 - Shortcuts: N to create, / to search, 1/2/3 to navigate, ? for help, Escape to close dialogs.
@@ -36,6 +36,8 @@ There is no backend, account or cross-device synchronization. Browser data stays
 `dist/app.js` owns a task array containing `id`, `title`, optional `notes`, `subject`, `deadline`, `priority`, `completed`, optional `plannedFor` and optional `completedAt`. Every mutation goes through `save()`, which stores the array in the existing `focusflow.tasks.v1` local-storage key and rerenders derived lists, statistics and calendar markers. Existing saved tasks are compatible; no migration or reset is required. Deadline comparisons use local calendar dates. First launch seeds sample tasks relative to the current date.
 
 Search, filters, navigation and one-step undo are session state. `focusflow.layout` and `focusflow.theme` persist separately. Completing a task saves immediately, then calls an optional presentation-only React island. The animation never owns or delays task state.
+
+`dist/refinements.css` makes small presentation changes to the original interface: tighter spacing, less repeated helper text and deep red gradients on the primary action, active navigation and selected date, with a faint tint on the paper notes. The typefaces, bulletin rotation, layout controls, progress gauge and centered priority bins are retained. The daily ring uses a theme-aware SVG gradient. No task state or storage keys change.
 
 `dist/drag.js` owns only the transient pointer gesture, drag preview and centered priority bins. It commits a valid drop through `FocusFlowData.changePriority()`, which updates the same canonical task array, records Undo, saves and renders. Moving across a priority filter clears that filter so the moved card stays visible. No drag positions or duplicate task state are persisted.
 
