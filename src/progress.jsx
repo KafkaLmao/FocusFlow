@@ -14,8 +14,8 @@ function AssignmentProgress({ completed, total }) {
   return <section className="overall-progress" aria-label="Overall assignment completion">
     <div className="panel-heading"><h2>Overall progress</h2><span className="muted">All assignments</span></div>
     <div className="overall-progress-body">
-      <SloshGauge value={percent} interactive={false} width={100} height={176} radius={12}
-        ticks={0} viscosity={0.3} tilt={0.35} splash={0.2}
+      <SloshGauge value={percent} interactive={false} width={64} height={108} radius={8}
+        ticks={0} viscosity={0} tilt={0} splash={0}
         liquidColor={dark ? '#ededed' : '#171717'} glassColor={dark ? '#202020' : '#f5f5f5'}
         ariaLabel={`Assignments completed: ${completed} of ${total}`} />
       <div className="overall-progress-copy">

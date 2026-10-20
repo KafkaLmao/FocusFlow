@@ -6,8 +6,8 @@ const host = document.getElementById('ambient-background');
 const toggle = document.getElementById('ambient-toggle');
 if (host && toggle) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)');
-  let enabled = true;
-  try { enabled = localStorage.getItem('focusflow.ambient') !== 'off'; } catch {}
+  let enabled = false;
+  try { enabled = localStorage.getItem('focusflow.ambient') === 'on'; } catch {}
   let instance = null;
   let failed = false;
   let suspended = false;
@@ -73,7 +73,7 @@ if (host && toggle) {
     sync();
   }
   function storage(event) {
-    if (event.key === 'focusflow.ambient') {enabled = event.newValue !== 'off';sync();}
+    if (event.key === 'focusflow.ambient') {enabled = event.newValue === 'on';sync();}
   }
   const observer = new MutationObserver(themeChanged);
   const resize = new ResizeObserver(() => instance?.resize());

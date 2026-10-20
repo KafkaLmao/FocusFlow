@@ -1,5 +1,5 @@
-:root{--priority-high:#19713c;--priority-high-bg:#eef9f0;--priority-medium:#8a6200;--priority-medium-bg:#fff8db;--priority-low:#a92f2f;--priority-low-bg:#fff0ef}
-[data-theme=dark]{--priority-high:#8cdea7;--priority-high-bg:#173121;--priority-medium:#f1cf63;--priority-medium-bg:#342e17;--priority-low:#f4a09a;--priority-low-bg:#3c2020}
+:root{--priority-high:#a92f2f;--priority-high-bg:#fff0ef;--priority-medium:#8a6200;--priority-medium-bg:#fff8db;--priority-low:#19713c;--priority-low-bg:#eef9f0}
+[data-theme=dark]{--priority-high:#f4a09a;--priority-high-bg:#3c2020;--priority-medium:#f1cf63;--priority-medium-bg:#342e17;--priority-low:#8cdea7;--priority-low-bg:#173121}
 .priority.High,.priority-select[data-priority=High]{color:var(--priority-high);border-color:var(--priority-high);background-color:var(--priority-high-bg)}
 .priority.Medium,.priority-select[data-priority=Medium]{color:var(--priority-medium);border-color:var(--priority-medium);background-color:var(--priority-medium-bg)}
 .priority.Low,.priority-select[data-priority=Low]{color:var(--priority-low);border-color:var(--priority-low);background-color:var(--priority-low-bg)}

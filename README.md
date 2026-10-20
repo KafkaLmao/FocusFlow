@@ -23,9 +23,10 @@ There is no backend, account or cross-device synchronization. Browser data stays
 - Bulletin/Dashboard selector, persisted independently from dark/light preference. Switching layouts preserves all tasks, filters and completion states.
 - Daily tasks, overdue tasks, upcoming deadlines and completed views.
 - Search plus subject/priority filters; drag-and-drop priority board with a keyboard/touch editing alternative.
+- Physical card dragging with mouse, pen or touch: use the six-dot grip on any unfinished assignment. A lifted card follows the pointer; drop into a board column or the floating High/Medium/Low bar. Touch scrolling stays available on the card body. Escape, an outside drop or an interrupted gesture cancels. Priority changes persist and support Undo. Focus a grip and use Left/Right or Home/End for the same action with the keyboard.
 - Current-month calendar with deadline markers, retained on mobile, and the next seven days of deadlines.
 - SVG daily completion ring, with no CSS gradients.
-- Completion crumples a paper representation of the task using the actual React Bits PaperCrumple component. The effect plays in both layouts. Rapid completions queue; undo cancels the matching effect. WebGL failures use a small CSS fallback. Reduced motion skips decorative completion animation.
+- Completion briefly crumples a small paper representation of the task using the actual React Bits PaperCrumple component. The effect plays in both layouts. Rapid completions retain only the latest waiting effect; undo cancels the matching effect. WebGL failures use a small CSS fallback. Reduced motion skips decorative completion animation.
 - Undo the most recent completion/uncompletion or deletion using the toast's Undo button or Ctrl/Cmd+Z. Completed tasks remain accessible in Completed and can be marked incomplete there at any time.
 - Shortcuts: N to create, / to search, 1/2/3 to navigate, ? for help, Escape to close dialogs.
 - Local persistence, cross-tab task/theme/layout updates, storage-failure feedback, and an intentionally empty task list remains empty.
@@ -35,6 +36,8 @@ There is no backend, account or cross-device synchronization. Browser data stays
 `dist/app.js` owns a task array containing `id`, `title`, optional `notes`, `subject`, `deadline`, `priority`, `completed`, optional `plannedFor` and optional `completedAt`. Every mutation goes through `save()`, which stores the array in the existing `focusflow.tasks.v1` local-storage key and rerenders derived lists, statistics and calendar markers. Existing saved tasks are compatible; no migration or reset is required. Deadline comparisons use local calendar dates. First launch seeds sample tasks relative to the current date.
 
 Search, filters, navigation and one-step undo are session state. `focusflow.layout` and `focusflow.theme` persist separately. Completing a task saves immediately, then calls an optional presentation-only React island. The animation never owns or delays task state.
+
+`dist/drag.js` owns only the transient pointer gesture, drag preview and drop bar. It commits a valid drop through `FocusFlowData.changePriority()`, which updates the same canonical task array, records Undo, saves and renders. Moving across a priority filter clears that filter so the moved card stays visible. No drag positions or duplicate task state are persisted.
 
 ## React Bits integration
 
@@ -52,7 +55,7 @@ Lenis uses one GSAP ticker with millisecond conversion and native touch scrollin
 
 ## Vanta background
 
-Vanta DOTS 0.5.24 adds a subtle grayscale dot field behind the workspace. It shares the existing Three.js 0.180.0 bundle with PaperCrumple. The vendored effect has a small constructor adapter to accept an explicitly injected Three.js module instead of requiring a global. `showLines` is disabled and touch/mouse/gyro controls are off. Light/dark changes update the point material directly. The Background toggle persists locally; reduced motion and hidden tabs destroy the animation. Context failures retain a static background. Teardown disposes the Vanta scene and renderer. Source and MIT license: `src/vendor/vanta`, https://github.com/tengbao/vanta. Browser/GPU verification is still required.
+Vanta DOTS 0.5.24 adds an optional grayscale dot field behind the workspace. It defaults to off for new visitors, respects existing saved preferences and uses low opacity when enabled so assignments stay prominent. It shares the existing Three.js 0.180.0 bundle with PaperCrumple. The vendored effect has a small constructor adapter to accept an explicitly injected Three.js module instead of requiring a global. `showLines` is disabled and touch/mouse/gyro controls are off. Light/dark changes update the point material directly. The Background toggle persists locally; reduced motion and hidden tabs destroy the animation. Context failures retain a static background. Teardown disposes the Vanta scene and renderer. Source and MIT license: `src/vendor/vanta`, https://github.com/tengbao/vanta. Physical-device GPU verification is still required.
 
 ## New-note pinning
 
@@ -60,7 +63,7 @@ New assignments in Bulletin get a GSAP paper-settle and pushpin-press animation.
 
 ## Overall Slosh Gauge
 
-The right column shows the React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. The existing React island renders a read-only gauge with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Reduced motion settles the liquid immediately. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component. The calendar remains directly below the gauge.
+The right column shows a compact, static React Bits SloshGauge from https://reactbits.dev/micro/slosh-gauge, using the JS/CSS source at https://reactbits.dev/r/SloshGauge-JS-CSS.json. The 64 x 108 gauge updates without liquid bounce, keeping the daily ring and tasks visually dominant. The existing React island renders it read-only with `round(completed / total * 100)`, counting every assignment regardless of filters or layout. Empty lists show 0%. All completed tasks show 100%. Add, delete, complete, reopen, undo and cross-tab updates feed fresh counts from the canonical task array. Theme changes update the monochrome liquid and tank colors. Tick gradients were removed to preserve the no-gradient design. The existing React Bits license also covers this component. The calendar remains directly below the gauge.
 
 ## Daily workflow improvements
 
@@ -72,3 +75,7 @@ The right column shows the React Bits SloshGauge from https://reactbits.dev/micr
 - **Accessibility** adds native date buttons, selected navigation states and keyboard focus restoration after completing/planning tasks.
 
 `npm test` now also runs `workflow-test.cjs`, covering actual view scopes, unchanged deadlines during planning, completion history, undo, calendar navigation and date filtering, notes search, sorting, strict backup validation, idempotent import and atomic storage failure. These are state/DOM-adapter checks, not visual browser or device checks.
+
+`drag-test.cjs` checks the pointer controller's pickup threshold, preview movement, target highlighting, mouse/touch commits, touch capture transfer, cancellation, interrupted gestures, scrolling-surface exclusions and keyboard moves using a minimal DOM adapter. Smoke tests also check priority Undo, persistence, invalid/completed-task rejection and filter handling. Real browser and physical touch-device checks remain necessary for layout and native gesture behavior.
+
+`npm run test:browser` runs `browser-test.cjs` in installed Chrome with Playwright available (`npm install --no-save --package-lock=false playwright`, or set `FOCUSFLOW_PLAYWRIGHT` to an existing Playwright module). It starts its own local static server and uses isolated browser profiles with disposable fixtures. Checks cover light/dark priority colors (High red, Medium amber, Low green), quiet defaults, gauge dimensions, mouse and emulated touch dragging, priority persistence, Undo, keyboard moves, native touch scrolling, completion effects, reduced motion and overflow down to 320px. Screenshots are written to ignored `.test-artifacts/`. These are actual Chrome checks with mobile emulation; they do not replace testing on a physical phone.

@@ -51,7 +51,7 @@ class EffectBoundary extends Component {
 }
 
 function Fallback({ src, done }) {
-  useEffect(() => { const timer = setTimeout(done, 650);return () => clearTimeout(timer); }, [done]);
+  useEffect(() => { const timer = setTimeout(done, 420);return () => clearTimeout(timer); }, [done]);
   return <img className="crumple-fallback" src={src} alt="" />;
 }
 
@@ -79,18 +79,18 @@ function Completion({ job, done }) {
     if (started.current) return;
     started.current = true;
     timers.current.forEach(clearTimeout);
-    timers.current = [setTimeout(() => setLeaving(true), 900), setTimeout(done, 1200)];
+    timers.current = [setTimeout(() => setLeaving(true), 450), setTimeout(done, 650)];
   }
-  const size = Math.min(360, innerWidth - 20);
+  const size = Math.min(220, innerWidth - 20);
   const x = Math.max(10, Math.min(innerWidth - size - 10, job.rect.left + job.rect.width / 2 - size / 2));
   const y = Math.max(10, Math.min(innerHeight - size - 10, job.rect.top + job.rect.height / 2 - size / 2));
   const fallback = <Fallback src={src} done={done} />;
   return <div ref={host} className={`completion-paper ${leaving ? 'leaving' : ''}`} style={{left:x,top:y,width:size,height:size}} aria-hidden="true">
     <EffectBoundary fallback={fallback}>
-      {failed ? fallback : <PaperCrumple src={src} width={270} height={270} sceneHeight={size}
+      {failed ? fallback : <PaperCrumple src={src} width={170} height={170} sceneHeight={size}
         autoCrumple onReady={ready} onError={() => setFailed(true)}
-        crumpleAmount={1} crumpleDuration={0.5} releaseBehavior="stay"
-        draggable={false} detail={32} foldCount={6} paperColor={dark ? '#111111' : '#ffffff'}
+        crumpleAmount={1} crumpleDuration={0.28} releaseBehavior="stay"
+        draggable={false} detail={24} foldCount={6} paperColor={dark ? '#111111' : '#ffffff'}
         paperTexture={0.06} shadow={false} lightIntensity={1.6} />}
     </EffectBoundary>
   </div>;
@@ -110,7 +110,9 @@ if (host) {
       if (reduced()) return;
       try {
         const job = { key:++sequence, id:task.id, rect, task:{...task} };
-        queue.push(job);
+        // Rapid completions keep only the latest waiting effect so decoration
+        // never trails behind the student's actual work.
+        queue.splice(0, queue.length, job);
         if (!active) advance();
       } catch { /* Completion is already saved. Decorative failures are nonfatal. */ }
     },

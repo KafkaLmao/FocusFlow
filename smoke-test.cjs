@@ -18,6 +18,18 @@ listeners.keydown[0]({key:'z',ctrlKey:true,target:{matches:()=>false},preventDef
 element('#search').oninput({target:{value:'no such assignment'}});assert.match(element('#tasks').innerHTML,/No matching assignments/);
 element('#search').oninput({target:{value:''}});element('#board-view').onclick();assert.match(element('#tasks').innerHTML,/board-column/);
 listeners.drop[0]({target:{closest:()=>({dataset:{priority:'Low'}})},preventDefault(){},dataTransfer:{getData:()=>added.id}});assert.equal(saved().find(t=>t.id===added.id).priority,'Low');
+// Drag commits use the canonical mutation path, including validation and undo.
+listeners.keydown[0]({key:'z',ctrlKey:true,target:{matches:()=>false},preventDefault(){}});
+assert.equal(saved().find(t=>t.id===added.id).priority,'High');
+assert.equal(context.window.FocusFlowData.changePriority(added.id,'Invalid'),false);
+assert.equal(context.window.FocusFlowData.changePriority('missing','Low'),false);
+assert.equal(context.window.FocusFlowData.changePriority(saved().find(t=>t.completed).id,'Low'),false);
+element('#priority-filter').onchange({target:{value:'High'}});
+assert.equal(context.window.FocusFlowData.changePriority(added.id,'Medium'),true);
+assert.equal(element('#priority-filter').value,'');
+assert.match(element('#tasks').innerHTML,new RegExp('data-id="'+added.id+'"'));
+assert.equal(context.window.FocusFlowData.changePriority(added.id,'Medium'),false);
+run();assert.equal(saved().find(t=>t.id===added.id).priority,'Medium');
 element('#theme').onclick();assert.equal(storage.get('focusflow.theme'),'dark');assert.equal(element('#mobile-theme').attributes['aria-checked'],'true');assert.equal(element('#header-theme-label').textContent,'Dark');element('#mobile-theme').onclick();assert.equal(storage.get('focusflow.theme'),'light');assert.equal(element('#mobile-theme').attributes['aria-checked'],'false');element('#mobile-theme').onclick();run();assert.equal(document.documentElement.dataset.theme,'dark');assert.equal(element('#header-theme-label').textContent,'Dark');
 element('#dashboard-layout').onclick();assert.equal(storage.get('focusflow.layout'),'dashboard');assert.equal(element('#dashboard-layout').attributes['aria-pressed'],'true');assert.equal(document.documentElement.dataset.layout,'dashboard');run();assert.equal(document.documentElement.dataset.layout,'dashboard');element('#bulletin-layout').onclick();assert.equal(document.documentElement.dataset.layout,'bulletin');assert.equal(element('#bulletin-layout').attributes['aria-pressed'],'true');assert.match(element('#tasks').innerHTML,/note-grid/);assert.match(element('#tasks').innerHTML,/sticky-note/);assert.match(element('#calendar').innerHTML,/calendar-today/);
 storage.set('focusflow.tasks.v1','[]');run();assert.equal(saved().length,0);assert.equal(progress.at(-1).completed,0);assert.equal(progress.at(-1).total,0);

@@ -1,4 +1,4 @@
-#ambient-background{position:fixed;inset:0 0 0 250px;overflow:hidden;pointer-events:none;z-index:0;background:var(--bg);opacity:.5}
+#ambient-background{position:fixed;inset:0 0 0 250px;overflow:hidden;pointer-events:none;z-index:0;background:var(--bg);opacity:.2}
 #ambient-background canvas{pointer-events:none!important}
 .shell{position:relative;z-index:1}
 header,.summary,.right-panel{background:var(--bg)}
